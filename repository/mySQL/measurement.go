@@ -100,8 +100,13 @@ func (r *measurementRepository) DeleteById(ctx context.Context, id uuid.UUID) er
 
 func (r *measurementRepository) UpdateLink(ctx context.Context, linkId uuid.UUID, measurementId uuid.UUID, amount int) error {
 	err := r.db.WithContext(ctx).
-		Raw("update saladRecipes.recipeIngredient set measurement = ?, amount = ? where id = ?", measurementId, amount, linkId).
-		Error
+		Table("recipeIngredient").
+		Where("id = ?", linkId).
+		Updates(map[string]interface{}{
+			"measurement": measurementId,
+			"amount":      amount,
+		}).Error
+
 	if err != nil {
 		return fmt.Errorf("updating measurement: %w", err)
 	}
