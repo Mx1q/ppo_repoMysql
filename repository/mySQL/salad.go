@@ -165,6 +165,7 @@ func (r *saladRepository) GetAll(ctx context.Context, filter *domain.RecipeFilte
 func (r *saladRepository) GetAllByUserId(ctx context.Context, id uuid.UUID) ([]*domain.Salad, error) {
 	var dbSalads []*rDomain.Salad
 	err := r.db.WithContext(ctx).
+		Table("salad").
 		Where("authorId = ?", id).
 		Scan(&dbSalads).Error
 	if err != nil {
