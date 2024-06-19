@@ -180,25 +180,33 @@ func (r *saladRepository) GetAllByUserId(ctx context.Context, id uuid.UUID) ([]*
 }
 
 func (r *saladRepository) GetAllRatedByUser(ctx context.Context, userId uuid.UUID, page int) ([]*domain.Salad, int, error) {
-	query := `with rates as (select salad
-	from saladRecipes.comment
-	where author = @author)
-	select id, name, authorId, description
-	from saladRecipes.salad
-	where id in (select salad from rates)
-	offset @offset
-    limit @limit`
+	var saladIds []uuid.UUID
+	rows, err := r.db.WithContext(ctx).
+		Table("comment").
+		Select("comment.salad").
+		Where("author = ?", userId).
+		Rows()
+	if err != nil {
+		return nil, 0, fmt.Errorf("fetching salads: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id uuid.UUID
+		rows.Scan(&id)
+		saladIds = append(saladIds, id)
+	}
 
 	var dbSalads []*rDomain.Salad
-	err := r.db.WithContext(ctx).
-		Raw(query, map[string]interface{}{
-			"offset": PageSize * (page - 1),
-			"limit":  PageSize,
-			"author": userId,
-		}).
-		Scan(&dbSalads).Error
-	if err != nil {
-		return nil, 0, fmt.Errorf("getting salads rated by user: %w", err)
+	if len(saladIds) != 0 {
+		err := r.db.WithContext(ctx).
+			Table("salad").
+			Limit(PageSize).
+			Offset(PageSize*(page-1)).
+			Find(&dbSalads, saladIds).Error
+
+		if err != nil {
+			return nil, 0, fmt.Errorf("getting salads rated by user: %w", err)
+		}
 	}
 
 	salads := make([]*domain.Salad, 0)
@@ -206,27 +214,18 @@ func (r *saladRepository) GetAllRatedByUser(ctx context.Context, userId uuid.UUI
 		salads = append(salads, rDomain.ToSaladBL(salad))
 	}
 
-	numRows := 0
-	query = `with rates as (select salad
-	from saladRecipes.comment
-	where author = @author)
-	select count(*) as numRows
-	from saladRecipes.salad
-	where id in (select salad from rates)`
-	err = r.db.WithContext(ctx).
-		Raw(query, map[string]interface{}{
-			"author": userId,
-		}).
-		Scan(&numRows).Error
-	if err != nil {
-		return nil, 0, fmt.Errorf("getting salads rated by user: %w", err)
-	}
-	numPages := numRows / PageSize
-	if numRows%PageSize != 0 {
-		numPages++
+	numPages := 0
+	if len(saladIds) != 0 {
+		var tmp []*rDomain.Salad
+		count := r.db.WithContext(ctx).
+			Find(&tmp, saladIds).RowsAffected
+		numPages = int(count / PageSize)
+		if count%PageSize != 0 {
+			numPages++
+		}
 	}
 
-	return salads, numPages, nil
+	return salads, int(numPages), nil
 }
 
 func (r *saladRepository) Update(ctx context.Context, salad *domain.Salad) error {
