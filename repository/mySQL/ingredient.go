@@ -77,10 +77,13 @@ func (r *ingredientRepository) GetAllByRecipeId(ctx context.Context, id uuid.UUI
 	if err != nil {
 		return nil, fmt.Errorf("getting recipe ingredient ids: %w", err)
 	}
-	err = r.db.WithContext(ctx).
-		Find(&ingredients, ingredientIds).Error
-	if err != nil {
-		return nil, fmt.Errorf("getting recipe ingredients: %w", err)
+
+	if len(ingredientIds) != 0 {
+		err = r.db.WithContext(ctx).
+			Find(&ingredients, ingredientIds).Error
+		if err != nil {
+			return nil, fmt.Errorf("getting recipe ingredients: %w", err)
+		}
 	}
 
 	resIngredients := make([]*domain.Ingredient, 0)
