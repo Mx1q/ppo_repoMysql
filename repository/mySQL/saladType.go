@@ -78,8 +78,10 @@ func (r *saladTypeRepository) GetAllBySaladId(ctx context.Context, saladId uuid.
 		return nil, fmt.Errorf("getting salad type ids: %w", err)
 	}
 
-	err = r.db.WithContext(ctx).
-		Find(&saladTypes, saladIds).Error
+	if len(saladIds) != 0 {
+		err = r.db.WithContext(ctx).
+			Find(&saladTypes, saladIds).Error
+	}
 	if err != nil {
 		return nil, fmt.Errorf("getting salad types: %w", err)
 	}
