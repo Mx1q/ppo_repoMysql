@@ -22,6 +22,10 @@ func (SaladType) TableName() string {
 	return "saladType"
 }
 
+func (TypeLink) TableName() string {
+	return "typesOfSalads"
+}
+
 func ToSaladTypeDB(saladType *domain.SaladType) *SaladType {
 	return &SaladType{
 		ID:          saladType.ID,
