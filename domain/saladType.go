@@ -14,8 +14,8 @@ type SaladType struct {
 
 type TypeLink struct {
 	ID      uuid.UUID `gorm:"primaryKey"`
-	SaladId uuid.UUID
-	TypeId  uuid.UUID
+	SaladId uuid.UUID `gorm:"column:saladId"`
+	TypeId  uuid.UUID `gorm:"column:typeId"`
 }
 
 func (SaladType) TableName() string {
