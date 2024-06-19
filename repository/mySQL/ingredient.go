@@ -120,7 +120,7 @@ func (r *ingredientRepository) Link(ctx context.Context, recipeId uuid.UUID, ing
 		IngredientId: ingredientId,
 	}
 	err := r.db.WithContext(ctx).
-		Select("recipeId", "ingredientId").
+		Select("id", "recipeId", "ingredientId").
 		Create(&link).Error
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("linking ingredient: %w", err)
