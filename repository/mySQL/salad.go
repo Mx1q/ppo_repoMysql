@@ -56,7 +56,7 @@ func (r *saladRepository) GetAll(ctx context.Context, filter *domain.RecipeFilte
 	tiRows, err := r.db.WithContext(ctx).
 		Table("recipe").
 		Select("recipe.saladId as id", "count(*) as cnt").
-		Joins("join recipeIngredient on recipe.id = recipeIngredient.recipeId").
+		Joins("left join recipeIngredient on recipe.id = recipeIngredient.recipeId").
 		Group("recipe.id").
 		Rows()
 	if err != nil {
@@ -79,7 +79,7 @@ func (r *saladRepository) GetAll(ctx context.Context, filter *domain.RecipeFilte
 			Table("recipe").
 			Select("recipe.saladId as id", "count(*) as cnt").
 			Where("recipeIngredient.ingredientId in ?", filter.AvailableIngredients).
-			Joins("join recipeIngredient on recipe.id = recipeIngredient.recipeId").
+			Joins("left join recipeIngredient on recipe.id = recipeIngredient.recipeId").
 			Group("recipe.id").
 			Rows()
 		if err != nil {
@@ -110,7 +110,7 @@ func (r *saladRepository) GetAll(ctx context.Context, filter *domain.RecipeFilte
 		Table("recipe").
 		Select("recipe.saladId as id").
 		Where("typesOfSalads.typeId in ?", filter.SaladTypes).
-		Joins("join typesOfSalads on recipe.saladId = typesOfSalads.saladId").
+		Joins("left join typesOfSalads on recipe.saladId = typesOfSalads.saladId").
 		Group("recipe.id").
 		Scan(&tIds).Error
 	if err != nil {
@@ -134,7 +134,7 @@ func (r *saladRepository) GetAll(ctx context.Context, filter *domain.RecipeFilte
 	err = r.db.WithContext(context.Background()).
 		Table("salad").
 		Select("salad.id", "salad.authorId", "salad.name", "salad.description").
-		Joins("join recipe on recipe.saladId = salad.id").
+		Joins("left join recipe on recipe.saladId = salad.id").
 		Where("salad.id in ?", twiceSorted).
 		Where(
 			r.db.WithContext(ctx).
